@@ -3,4 +3,4 @@
 
 ## Results
 <img src="ref.jpg" width=50% height=50%>
-<img src="samples.jpg" width=80% height=80%>
+<img src="samples.jpg" width=50% height=50%>
