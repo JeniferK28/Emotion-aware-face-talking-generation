@@ -66,7 +66,6 @@ class audio_lmrk_graph(Dataset):
         input = torch.unsqueeze(ref_lmrk, 0).to(self.device)
 
         #neutral or emo
-        #file = c[0] + '_' + c[1] + '_' + c[2] + '_' + c[3] + '_' + c[4] + '.npy'
         file = c[0] + '_' + c[1] + '_' + c[2] + '_' + c[3] + '_' + str(int(c[4])) + '.npy'
         spk_emb = np.load(os.path.join(self.path_spk_emb, file))
         spk_emb = torch.FloatTensor(spk_emb).to(self.device)
