@@ -122,10 +122,6 @@ audio2lmrk = a2lNet(config).to(config.device)
 #audio2lmrk = a2lNet_pretrain(config).to(config.device)
 audio2lmrk.load_state_dict(torch.load(config.a2l_pretrain))
 
-#audio2lmrk = emo2lNet(config).to(config.device)
-#audio2lmrk.load_state_dict(torch.load(config.a2l_pretrain))
-
-
 #emo = audio.split('/')[6]
 emo = config.emo
 
@@ -135,54 +131,25 @@ c=0
 for mfcc in m:
     #elements to device
     data, audio, ref_lmrks = utils.a2l_data(shape_3d, mfcc, emo, spk_emb, adj, vertices, s, pos,  config.device)
+    
     #recunstruct landmarks per audio chunck
-
     lmrks_reconstructed, ct_emb, lmrk_emb = audio2lmrk(data, audio, ref_lmrks, config.device, train = 'False')
-    #lmrks_reconstructed = audio2lmrk(data, audio, ref_lmrks, config.device)
     lmrks_reconstructed = torch.squeeze(lmrks_reconstructed).cpu().detach().numpy()
-    #lmrks_reconstructed[48:, 0] = (lmrks_reconstructed[48:, 0] - np.mean(lmrks_reconstructed[48:, 0])) * 0.95 + np.mean(lmrks_reconstructed[48:, 0])
-    #lmrks_reconstructed[49:54, 1] += 1.
-    #lmrks_reconstructed[55:60, 1] -= 1.
-    #lmrks_reconstructed[[37, 38, 43, 44], 1] -= 2
-    #lmrks_reconstructed[[40, 41, 46, 47], 1] += 2
 
-    #lmrks_reconstructed = torch.squeeze(lmrks_reconstructed)
     fls[c,:,:] = torch.Tensor(lmrks_reconstructed)
     c = c + 1
 
-
-#####################################################
-
-''' De-normalize the output to the original image scale '''
-
-#fls = glob.glob1('results', 'pred_fls_*.txt')
-#fls.sort()
-
-    #fl = np.loadtxt(os.path.join('examples', fls[i])).reshape((-1, 68, 3))
-    #fl[:, :, 0:2] = -fl[:, :, 0:2]
-    #fl[:, :, 0:2] = fl[:, :, 0:2] / scale - shift
-
-    # if (ADD_NAIVE_EYE):
-    #     fl = util.add_naive_eye(fl)
-
-    # additional smooth
 
 fls = fls.reshape((-1, 136)).cpu().detach().numpy()
 fls[:, :48 * 2] = savgol_filter(fls[:, :48 * 2], 15, 3, axis=0)
 fls[:, 48 * 2:] = savgol_filter(fls[:, 48 * 2:], 5, 3, axis=0)
 fls = fls.reshape((-1, 68, 2))
 
-''' lmrk2Img translation '''
+''' lmrk2Img '''
 model = Image_translation_block(img_config(), single_test=True)
 with torch.no_grad():
     model.single_test(jpg=img, fls=fls, prefix=sub_id)
     print('Gen')
-
-#os.remove(os.path.join('results', fls[i]))
-# if (os.path.exists('results/' + sub_id + '.jpg')):
-#     os.remove('results/' + sub_id + '.jpg')
-# if (os.path.exists('results/{}.m4a'.format(sub_id))):
-#     os.remove('results/{}.m4a'.format(sub_id))
 
 
 
