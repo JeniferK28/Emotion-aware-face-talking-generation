@@ -18,21 +18,18 @@ def draw_lmrk(data, out, output, batch_size):
     img_fl = np.ones(shape=(256, 256, 3), dtype=np.uint8) * 255
     fl = data[j].squeeze().cpu().detach().numpy().astype(int)
     img_fl = vis_landmark_on_img(img_fl, np.reshape(fl, (68, 2)))
-    # img_fl.transpose((2, 0, 1)
     img_fl = np.stack(img_fl, axis=0).astype(np.float32) / 255.0
     image_fls_in = torch.tensor(img_fl, requires_grad=False).to(device)
 
     img_fl_out = np.ones(shape=(256, 256, 3), dtype=np.uint8) * 255
     fl_out = out[j].squeeze().cpu().detach().numpy().astype(int)
     img_fl_out = vis_landmark_on_img(img_fl_out, np.reshape(fl_out, (68, 2)))
-    # img_fl.transpose((2, 0, 1)
     img_fl_out = np.stack(img_fl_out, axis=0).astype(np.float32) / 255.0
     image_fls_out = torch.tensor(img_fl_out, requires_grad=False).to(device)
 
     img_fl_output = np.ones(shape=(256, 256, 3), dtype=np.uint8) * 255
     fl_output = output[j].squeeze().cpu().detach().numpy().astype(int)
     img_fl_output = vis_landmark_on_img(img_fl_output, np.reshape(fl_output, (68, 2)))
-    # img_fl.transpose((2, 0, 1)
     img_fl_output = np.stack(img_fl_output, axis=0).astype(np.float32) / 255.0
     image_fls_output = torch.tensor(img_fl_output, requires_grad=False).to(device)
 
@@ -56,8 +53,6 @@ def train(config, train_loader, test_loader, model):
         for i, (data_in, data_out, lmrks, audio) in enumerate(train_loader):
             iter_start_time = time.time()
 
-
-            #   data = Variable(data.float().cuda())
             outputs, losses = model.train_func(data_in, data_out, lmrks, audio)
             #losses_values = {k: v.item() for k, v in losses.items()}
             for k, v in losses.items():
@@ -67,9 +62,6 @@ def train(config, train_loader, test_loader, model):
             writer.add_scalar('Loss/Train', loss, train_iter)
 
             if (train_iter % 100 == 0):
-                # for k, v in losses_values.items():
-                #    print(k,v)
-
                 print('[%d,%5d / %d] Rec loss :%.10f, lips loss : %.10f, time spent: %f s' % (
                     epoch + 1, i + 1, len(train_loader), loss, losses['l1'].item(), time.time() - a))
 
@@ -99,7 +91,6 @@ def train(config, train_loader, test_loader, model):
 
 
         string_fts = os.path.join(config.model_dir, 'audio2lmrk_' + run_detail + '_' + str(epoch) + '.pt')
-        # model.eval()
         torch.save(model.state_dict(), string_fts)
 
         print("start to validate, epoch %d" % (epoch + 1))
