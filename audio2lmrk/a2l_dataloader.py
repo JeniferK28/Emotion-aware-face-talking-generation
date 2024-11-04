@@ -83,7 +83,6 @@ class audio_lmrk_graph(Dataset):
         audio['s'] = self.s.to(self.device)
         audio['emo_class'] = torch.Tensor([emo_class[emotion]]).to(self.device)
         audio['emotion'] = torch.squeeze(clip.tokenize(emotion)).to(self.device)
-        #device = torch.device('cuda')
         lmrks['out'] = out
         lmrks['in'] = input
         lmrks['pre'] = all_lmrks
@@ -122,7 +121,6 @@ class audio_lmrk_vertice(Dataset):
         data = torch.FloatTensor(ref_lmrk)
         data = torch.unsqueeze(data, 0).to(self.device)
 
-        #c = self.all_data[idx].split('/')[-1].split('\\')[-1].split('_')
         file = c[0]+ '_' + c[1] + '_' + c[2] + '_' + c[3] + '_' + c[4] + '.npy'
         spk_emb = np.load(os.path.join(self.path_spk_emb,file))
         spk_emb = torch.FloatTensor(spk_emb).to(self.device)
