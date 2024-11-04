@@ -17,9 +17,6 @@ class Image_translation_block():
 
     def __init__(self, opt_parser, single_test=False):
         print('Run on device {}'.format(device))
-
-        # for key in vars(opt_parser).keys():
-        #     print(key, ':', vars(opt_parser)[key])
         self.opt_parser = opt_parser
 
         # model
@@ -97,8 +94,6 @@ class Image_translation_block():
 
             input = input.reshape(-1, 6, 256, 256).to(device)
             image_out = image_out.reshape(-1, 3, 256, 256).to(device)
-            # image_in, image_out = \
-            #     image_in.reshape(-1, 6, 256, 256).to(device), image_out.reshape(-1, 3, 256, 256).to(device)
 
             # image2image net fp
             g_out = self.G(input)
@@ -187,7 +182,6 @@ class Image_translation_block():
                 fl = pred_lmrks[i].astype(int)
 
                 img_fl = vis_landmark_on_img(img_fl, np.reshape(fl, (68, 3)))
-                # img_fl.transpose((2, 0, 1)
                 img_fl = np.stack(img_fl, axis=0).astype(np.float32) / 255.0
                 image_fls_in = torch.tensor(img_fl, requires_grad=False).to(device)
 
@@ -196,10 +190,6 @@ class Image_translation_block():
             input = input.reshape(-1, 6, 256, 256).to(device)
             image_out = image_out.reshape(-1, 3, 256, 256).to(device)
 
-            # image_in, image_out = \
-            #     image_in.reshape(-1, 6, 256, 256).to(device), image_out.reshape(-1, 3, 256, 256).to(device)
-
-            # image2image net fp
             g_out = self.G(input)
             g_out = torch.tanh(g_out)
 
@@ -268,7 +258,6 @@ class Image_translation_block():
             frame = np.concatenate((img_fl, jpg), axis=2).astype(np.float32)/255.0
 
             image_in, image_out = frame.transpose((2, 0, 1)), np.zeros(shape=(3, 256, 256))
-            # image_in, image_out = frame.transpose((2, 1, 0)), np.zeros(shape=(3, 256, 256))
             image_in, image_out = torch.tensor(image_in, requires_grad=False), \
                                   torch.tensor(image_out, requires_grad=False)
 
@@ -282,10 +271,6 @@ class Image_translation_block():
             g_out[g_out < 0] = 0
             ref_in = image_in[:, 3:6, :, :].cpu().detach().numpy().transpose((0, 2, 3, 1))
             fls_in = image_in[:, 0:3, :, :].cpu().detach().numpy().transpose((0, 2, 3, 1))
-            # g_out = g_out.cpu().detach().numpy().transpose((0, 3, 2, 1))
-            # g_out[g_out < 0] = 0
-            # ref_in = image_in[:, 3:6, :, :].cpu().detach().numpy().transpose((0, 3, 2, 1))
-            # fls_in = image_in[:, 0:3, :, :].cpu().detach().numpy().transpose((0, 3, 2, 1))
 
             if(grey_only):
                 g_out_grey =np.mean(g_out, axis=3, keepdims=True)
