@@ -7,15 +7,11 @@ import argparse
 from audio2lmrk import train
 import platform
 import torch
-#from torch.utils.data import DataLoader
 from torch_geometric.data import  DataLoader
 from a2l_dataloader import audio_lmrk_vertice, audio_lmrk_graph
-#from vertice_model_audio import a2lNet
 from gcn_model_audio import a2lNet, a2lNet_pretrain
-#from model_emotion import a2lENet
 from files_random import file_select
 from scipy import sparse
-#from model_emotion import emo2lNet
 import pandas as pd
 import clip
 
@@ -42,10 +38,6 @@ def parse_args():
     parser.add_argument("--batch_size",  type=int, default=256)
     parser.add_argument("--max_epochs", type=int, default=100)
     parser.add_argument("--cuda",  default=True)
-    # parser.add_argument("--train_dir", type=str,
-    #                     default="/home/jen/SDD/pre-trained_data/extended/neutral/cnt_emb")
-    # parser.add_argument("--val_dir", type=str,
-    #                     default="/home/jen/SDD/pre-trained_data/extended/neutral_test/cnt_emb")
     parser.add_argument("--train_dir", type=str, default="/media/jen/6dc9b3fb-1ae6-456d-8bc3-a056396531bf/pre-trained_data/emo/train/cnt_emb_5")
     parser.add_argument("--val_dir", type=str, default="/media/jen/6dc9b3fb-1ae6-456d-8bc3-a056396531bf/pre-trained_data/emo/test/cnt_emb_5")
     parser.add_argument('--device_ids', type=str, default=['0'])
@@ -63,14 +55,20 @@ def parse_args():
     parser.add_argument("--log_dir", type=str, default="/mnt/40E42154E4214D8A/audio_test/audio2lmrk/log/")
     parser.add_argument("--lmrk_dir", type=str, default="/mnt/40E42154E4214D8A/audio_test/audio2lmrk/samples/")
     parser.add_argument("--name", type=str, default='time_direct_emo_MSE_5')
-    #parser.add_argument("--name", type=str, default="emotion_train_both")
     parser.add_argument("--device", type=str,
                         default="cuda")
     parser.add_argument("--audio_pretrain", type=str,
                         default="/mnt/40E42154E4214D8A/audio_test/audio2lmrk/models/audio2lmrk_neutral_pretrain_time_MSE_disc_1st_frame_elu_ct_99.pt")
-    # parser.add_argument("--lmrk_pretrain", type=str,
-    #                     default="/mnt/40E42154E4214D8A/audio_test/audio2lmrk/models/lmrk_recon/lmrks_recons_99.pt")
-    #parser.add_argument("--audio_pretrain", type=str, default="/mnt/40E42154E4214D8A/audio_test/audio/models/Audio_pretrain_Style_pretrain_no_ct_99.pt")
+    parser.add_argument("--train_spk", type=str,default="/mnt/40E42154E4214D8A/spk_emb/train")
+    parser.add_argument("--train_path_lmrk", type=str,default="/mnt/40E42154E4214D8A/pross_data/lmrks")
+    parser.add_argument("--train_ref_lmrk", type=str,default="/mnt/40E42154E4214D8A/img_ref/MEAD_train/lmrks/close_lips")
+    
+    parser.add_argument("--val_spk", type=str,default="/mnt/40E42154E4214D8A/spk_emb/test")
+    parser.add_argument("--val_path_lmrk", type=str,default="/mnt/40E42154E4214D8A/pross_data/Test/lmrks")
+    parser.add_argument("--val_ref_lmrk", type=str,default="/mnt/40E42154E4214D8A/img_ref/MEAD_test/lmrks/close_lips")
+    
+    
+
     return parser.parse_args()
 
 if __name__=="__main__":
@@ -82,14 +80,7 @@ if __name__=="__main__":
     train_files = ''
     val_files = ''
 
-    #lmrk_train = []
-    #lmrk_val = []
 
-    # for lmrk in os.listdir(config.train_dir):
-    #     lmrk_train.append(os.path.join(config.train_dir, lmrk))
-    #
-    # for lmrk in os.listdir(config.val_dir):
-    #     lmrk_val.append(os.path.join(config.val_dir, lmrk))
     lmrk_train = file_select(config.train_dir, 'train')
     lmrk_val = file_select(config.val_dir, 'val')
 
@@ -102,28 +93,15 @@ if __name__=="__main__":
     s[48:60, 6] = 1; s[60:68, 7] = 1
 
 
-    train_spk = '/mnt/40E42154E4214D8A/spk_emb/train'
-    path_lmrk = '/mnt/40E42154E4214D8A/pross_data/lmrks'
-    #train_spk = '/home/jen/SDD/pre-trained_data/np/neutral/spk_emb'
-    #path_lmrk = '/home/jen/SDD/pre-trained_data/np/neutral/lmrks'
-    ref_lmrk = '/mnt/40E42154E4214D8A/img_ref/MEAD_train/lmrks/close_lips'
-    train_set = audio_lmrk_graph(lmrk_train, ref_lmrk, train_spk, config.train_dir, path_lmrk, vertices, adj, pos,s, config.device)
+    train_set = audio_lmrk_graph(lmrk_train, config.train_ref_lmrk, config.train_spk, config.train_dir, config.train_path_lmrk, vertices, adj, pos,s, config.device)
+    val_set = audio_lmrk_graph(lmrk_val, config.val_ref_lmrk, config.val_spk, config.val_dir, config.val_path_lmrk,  vertices, adj, pos, s, config.device)
 
 
-    val_spk = '/mnt/40E42154E4214D8A/spk_emb/test'
-    path_lmrk = '/mnt/40E42154E4214D8A/pross_data/Test/lmrks'
-    #val_spk = '/home/jen/SDD/pre-trained_data/np/neutral_test/spk_emb'
-    #path_lmrk = '/home/jen/SDD/pre-trained_data/np/neutral_test/lmrks'
-    ref_lmrk = '/mnt/40E42154E4214D8A/img_ref/MEAD_test/lmrks/close_lips'
-    val_set = audio_lmrk_graph(lmrk_val, ref_lmrk, val_spk, config.val_dir, path_lmrk, vertices, adj, pos, s, config.device)
-
-    # train_set,test_set = train_test_split(dataset, test_size=0.2, random_state=1)
     train_loader = DataLoader(train_set, batch_size=config.batch_size,
                               shuffle=True, drop_last=True)
     val_loader = DataLoader(val_set, batch_size=config.batch_size,
                             shuffle=True, drop_last=True)
 
-    #model = emo2lNet(config).to(config.device)
 
     model = a2lNet(config).to(config.device)
     train(config, train_loader, val_loader, model)
