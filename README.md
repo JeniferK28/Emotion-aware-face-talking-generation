@@ -1,1 +1,1 @@
-# Emotion-aware-face-talking-generation
+# Emotion-aware face-talking generation
