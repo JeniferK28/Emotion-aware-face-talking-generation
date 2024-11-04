@@ -8,12 +8,9 @@ from torch_geometric.nn.conv import TransformerConv, GraphConv
 from torch_geometric.nn import Set2Set, dense_diff_pool, knn_interpolate
 from torch_geometric.nn import BatchNorm
 from audio2lmrk.gcn_model_audio import a2lNet
-#from gcn_model_audio import a2lNet
 from torch_geometric.utils import to_dense_adj
 from utils import loss_custom
 
-
-# device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class lmrk_encoder(nn.Module):
     def __init__(self):
@@ -76,55 +73,21 @@ class lmrk_encoder_h(nn.Module):
         self.conv1 = GraphConv(self.feature_size, self.encoder_embedding_size).double()
         self.conv2 = GraphConv(self.encoder_embedding_size, self.encoder_embedding_size).double()
         self.conv3 = GraphConv(self.encoder_embedding_size, self.encoder_embedding_size).double()
-        # self.conv1 = TransformerConv(self.feature_size,
-        #                              self.encoder_embedding_size,
-        #                              heads=4,
-        #                              concat=False,
-        #                              beta=True)
         self.bn1 = BatchNorm(self.encoder_embedding_size)
-        # self.conv2 = TransformerConv(self.encoder_embedding_size,
-        #                              self.encoder_embedding_size,
-        #                              heads=4,
-        #                              concat=False,
-        #                              beta=True)
         self.bn2 = BatchNorm(self.encoder_embedding_size)
-        # self.conv3 = TransformerConv(self.encoder_embedding_size,
-        #                              self.encoder_embedding_size,
-        #                              heads=4,
-        #                              concat=False,
-        #                              beta=True)
         self.bn3 = BatchNorm(self.encoder_embedding_size)
-        # self.conv4 = TransformerConv(self.encoder_embedding_size,
-        #                              self.encoder_embedding_size,
-        #                              heads=4,
-        #                              concat=False,
-        #                              beta=True)
-
         # Pooling layers
         self.pooling = Set2Set(self.encoder_embedding_size, processing_steps=2)
 
     def forward(self, input, adj, s, device):
         x = self.conv1(input.x, input.edge_index).relu()
-        # x = self.bn1(x)
         x = self.conv2(x, input.edge_index).relu()
-        # x = self.bn2(x)
         x = self.conv3(x, input.edge_index).relu()
-        # x_resize = torch.zeros((1, 68, 128))
-        # c = 0
-        # for i in range(1):
-        #     x_resize[i, :, :] = x[68 * c:68 * (c + 1), :]
-        #     c += 1
+
         x_resize = torch.reshape(x, (input.num_graphs, 68, 128)).to(torch.float32)
-        #x_resize = torch.reshape(x, (1, 68, 128)).to(torch.float32)
-        # x = self.bn3(x)
-        # x = self.conv4(x, edge_index).relu()
 
         # Pool to global representation
-        # x = self.pooling(x, batch_index)
         x, adj, l1, e1 = dense_diff_pool(x_resize.to(device), adj, s)
-        # Latent transform layers
-        # mu = self.mu_transform(x)
-        # logvar = self.logvar_transform(x)
 
         return x, adj, l1, e1, input.pos
 
@@ -138,29 +101,10 @@ class lmrk_discriminator(nn.Module):
         self.conv1 = GraphConv(self.feature_size, self.encoder_embedding_size).double()
         self.conv2 = GraphConv(self.encoder_embedding_size, self.encoder_embedding_size).double()
         self.conv3 = GraphConv(self.encoder_embedding_size, self.encoder_embedding_size).double()
-        # self.conv1 = TransformerConv(self.feature_size,
-        #                              self.encoder_embedding_size,
-        #                              heads=4,
-        #                              concat=False,
-        #                              beta=True)
         self.bn1 = BatchNorm(self.encoder_embedding_size)
-        # self.conv2 = TransformerConv(self.encoder_embedding_size,
-        #                              self.encoder_embedding_size,
-        #                              heads=4,
-        #                              concat=False,
-        #                              beta=True)
         self.bn2 = BatchNorm(self.encoder_embedding_size)
-        # self.conv3 = TransformerConv(self.encoder_embedding_size,
-        #                              self.encoder_embedding_size,
-        #                              heads=4,
-        #                              concat=False,
-        #                              beta=True)
         self.bn3 = BatchNorm(self.encoder_embedding_size)
-        # self.conv4 = TransformerConv(self.encoder_embedding_size,
-        #                              self.encoder_embedding_size,
-        #                              heads=4,
-        #                              concat=False,
-        #                              beta=True)
+   
 
         # Pooling layers
         self.pooling = Set2Set(self.encoder_embedding_size, processing_steps=2)
@@ -169,16 +113,9 @@ class lmrk_discriminator(nn.Module):
 
     def forward(self, input, adj, s, device, train):
         x = self.conv1(input.x, input.edge_index).relu()
-        # x = self.bn1(x)
         x = self.conv2(x, input.edge_index).relu()
-        # x = self.bn2(x)
         x = self.conv3(x, input.edge_index).relu()
-        # x_resize = torch.zeros((1,68,128))
-        # c= 0
-        #
-        # for i in range(1):
-        #     x_resize[i,:,:] = x[68*c:68*(c+1),:]
-        #     c += 1
+ 
         if train:
             x_resize = torch.reshape(x, (input.num_graphs, 68, 128)).to(torch.float32)
         else: x_resize = torch.reshape(x, (1, 68, 128)).to(torch.float32)
@@ -215,15 +152,11 @@ class lmrk_decoder_up(nn.Module):
         )
 
     def forward(self, x, ct_emb, spk_emb, emo_vec):
-        # connect tensors inputs and dimension
-        # features = self.fc(features)
         x_fts = x.view(x.size(0), -1)
         features = torch.cat([x_fts, ct_emb, spk_emb, emo_vec], 1)
         features = torch.unsqueeze(features, 2)
         features = torch.unsqueeze(features, 3)
-        # for i in range(8):
-        #         x_fts[:,i,128:256] = features
-        # knn_interpolate(x_fts, pos, pos_skip, batch, batch_skip, k=self.k)
+
         x = self.deconv1(features)
         x = self.deconv2(x)
         x = self.deconv3(x)
@@ -427,18 +360,9 @@ class emo2lNet(nn.Module):
         self.u = config
         self.cont_net = a2lNet(self.u)
         self.cont_net.load_state_dict(torch.load(config.audio_pretrain))
-        #self.audio_fc = audio_conv()
         self.emo_enc = emotion()
-        # self.lmrk_encoder =lmrk_encoder()
-        #self.lmrk_encoder = lmrk_encoder_h()
-        # self.classify = class_emo()
-        # self.lmrk_decoder = lmrk_decoder_up()
-        # self.lmrk_decoder = lmrk_decoder_fc()
-        #self.lmrk_decoder_ct = lmrk_decoder_ct()
         self.lmrk_decoder_no_ct = lmrk_decoder_no_ct()
         self.emo_class = emo_class()
-        #self.lmrk_D = lmrk_discriminator()
-        #self.optimizerD = torch.optim.Adam(self.lmrk_D.parameters(), lr=config.lr, betas=(config.beta1, 0.999))
         self.optimizer = torch.optim.Adam(#list(self.lmrk_encoder.parameters())
                                           list(self.emo_enc.parameters())
                                           + list(self.emo_class.parameters())
@@ -492,45 +416,19 @@ class emo2lNet(nn.Module):
         b_size = audio['emb_spk'].size(0)
         label = torch.full((b_size,), real_label, dtype=torch.float, device=self.device)
 
-        # if train:
-        #     self.lmrk_D.zero_grad()
-        #     output = self.lmrk_D(y, adj, s, self.device, train)
-        #     err_real = 0.5 * torch.mean((output - label) ** 2)
-        #     err_real.backward(retain_graph=True)
-        #
-        #     label.fill_(fake_label)
-        #     new_lmrks = displacement
-        #     y.x = torch.reshape(new_lmrks, (y.num_graphs * 68, 2)).to(torch.float64)
-        #     output = self.lmrk_D(y, adj, s, self.device, train)
-        #     err_fake = 0.5 * torch.mean((output - label) ** 2)
-        #     err_fake.backward(retain_graph=True)
 
-        #     self.optimizerD.step()
-        #    # lips_loss = self.l1loss(displacement[:, :, 48:68, :] + lmrks_in[:, :, 48:68, :], lmrks_out[:, :, 48:68, :])
-        # label.fill_(real_label)  # fake labels are real for generator cost
-        # #Since we just updated D, perform another forward pass of all-fake batch through D
-        # output = self.lmrk_D(y, adj, s, self.device, train).view(-1)
-        #
-        # #Calculate G's loss based on this output
-        # losses['errG'] = 0.25 * torch.mean((output - label) ** 2)
-
-        # jaw_loss = self.l1loss(displacement[:, :, 3:14, :] + lmrks_in[:, :, 3:14, :], lmrks_out[:, :, 3:14, :])
         losses['MSE'] = 0.5*loss_custom(lmrks_out, displacement + lmrks_in, s,self.device)
         losses['l1'] = self.MSE(displacement, lmrks_out)
 
-        # outputs_dict = {
-        #     "out_1": out1,
-        #     "out_2": out2,
-        # }
+ 
         return displacement, losses
 
     def update_network(self, loss_dcit):
         loss = sum(loss_dcit.values())
         self.optimizer.zero_grad()
-        #self.optimizerD.zero_grad()
         loss.backward()
         self.optimizer.step()
-        #self.optimizerD.step()
+
 
     def update_learning_rate(self):
         self.scheduler.step(self.clock.epoch)
