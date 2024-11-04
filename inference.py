@@ -53,9 +53,7 @@ def parse_args():
     parser.add_argument("--lmrk_dir", type=str, default="/mnt/40E42154E4214D8A/audio_test/audio2lmrk/samples/")
     parser.add_argument("--name", type=str, default="gcn_mouth_dis_2d_50_2branch")
     parser.add_argument("--audio_pretrain", type=str, default="/mnt/40E42154E4214D8A/audio_test/audio2lmrk/models/audio2lmrk_neutral_pretrain_time_MSE_disc_1st_frame_elu_ct_99.pt")
-    #parser.add_argument("--a2l_pretrain", type=str,default="/mnt/40E42154E4214D8A/audio_test/audio2lmrk/models/audio2lmrk_emo_time_bothMSE_elu_nodisc_ct_emoclass_80.pt")
     parser.add_argument("--a2l_pretrain", type=str, default="/mnt/40E42154E4214D8A/audio_test/audio2lmrk/models/audio2lmrk_time_direct_emo_MSE_5_99.pt")
-    #time_bothMSE_attention, time_bothMSE_attention_linear, time_bothMSE_direct_linear
     parser.add_argument("--emo", type=str, default="angry")
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--audio_file", type=str, default="/media/jen/T7 Touch/Audio/test/M003/neutral/level_1/005.m4a")
@@ -82,7 +80,6 @@ img = cv2.imread(config.img_ref_file)
 
 predictor = face_alignment.FaceAlignment(face_alignment.LandmarksType._3D, device='cuda', flip_input=True)
 shapes = predictor.get_landmarks(img)
-#img = img_as_float32(io.imread(config.jpg))
 if (not shapes or len(shapes) != 1):
     print('Cannot detect face landmarks. Exit.')
     exit(-1)
@@ -95,11 +92,8 @@ shutil.copyfile('results/{}'.format(config.audio), 'results/tmp.wav')
 # speaking embedding
 spk_emb, a = utils.get_spk_emb('results/{}'.format(config.audio))
 
-
 print('Processing audio file', audio)
-#m = utils.audio_preprocessing(audio)
 m = utils.wav2data(audio,config.device)
-
 
 df = pd.read_excel('/mnt/40E42154E4214D8A/audio_test/landmark_matrix.xlsx')
 adj = pd.DataFrame(df).to_numpy()
