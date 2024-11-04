@@ -90,11 +90,6 @@ if (not shapes or len(shapes) != 1):
 shape_3d = shapes[0]
 shape_3d = utils.close_input_face_mouth(shape_3d)
 
-
-''' Normalize face '''
-#shape_3d, scale, shift = utils.norm_input_face(shape_3d)
-
-
 shutil.copyfile('results/{}'.format(config.audio), 'results/tmp.wav')
 
 # speaking embedding
