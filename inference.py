@@ -56,30 +56,29 @@ def parse_args():
     #parser.add_argument("--a2l_pretrain", type=str,default="/mnt/40E42154E4214D8A/audio_test/audio2lmrk/models/audio2lmrk_emo_time_bothMSE_elu_nodisc_ct_emoclass_80.pt")
     parser.add_argument("--a2l_pretrain", type=str, default="/mnt/40E42154E4214D8A/audio_test/audio2lmrk/models/audio2lmrk_time_direct_emo_MSE_5_99.pt")
     #time_bothMSE_attention, time_bothMSE_attention_linear, time_bothMSE_direct_linear
-    parser.add_argument("--emo", type=str,
-                        default="angry")
-    parser.add_argument("--device", type=str,
-                        default="cuda")
+    parser.add_argument("--emo", type=str, default="angry")
+    parser.add_argument("--device", type=str, default="cuda")
+    parser.add_argument("--audio_file", type=str, default="/media/jen/T7 Touch/Audio/test/M003/neutral/level_1/005.m4a")
+    parser.add_argument("--img_ref_path", type=str, default="/mnt/40E42154E4214D8A/img_ref/MEAD_test/img")
     return parser.parse_args()
+
+
 #M005. W019. W033
-#audio = '/media/jen/T7 Touch/Cream-D/Audio/Test/1002_DFA_ANG_XX.wav'
-audio = '/media/jen/T7 Touch/Audio/test/M003/neutral/level_1/005.m4a'
 
-audio_id = audio.split('/')[-1].split('.')[0]
-sub_id = audio.split('/')[6] + '_' + audio.split('/')[7] + '_' + audio.split('/')[8] + '_'+ audio.split('/')[9].split('.')[0]
 config = parse_args()
-shutil.copy(audio, 'results/{}.wav'.format(audio_id))
-config.jpg = '/mnt/40E42154E4214D8A/img_ref/MEAD_test/img/' + sub_id.split('_')[0] + '.jpg'
-#config.jpg = '/mnt/40E42154E4214D8A/img_ref/MEAD_test/img/aya.jpg'
-#config.jpg = '/mnt/40E42154E4214D8A/pross_data/Test/Images/W014_angry_level_3_001_5.jpg'
+audio_id = config.audio_file.split('/')[-1].split('.')[0]
+sub_id = config.audio_file.split('/')[6] + '_' + config.audio_file.split('/')[7] + '_' + config.audio_file.split('/')[8] + '_'+ config.audio_file.split('/')[9].split('.')[0]
+shutil.copy(config.audio_file, '/results/{}.wav'.format(audio_id))
 
-#sub_id = 'aya'
+config.img_ref_file =  os.path.join(config.img_ref_path, sub_id.split('_')[0] + '.jpg')
+
 config.audio = audio_id + '.wav'
 config.device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+
 from skimage import io, img_as_float32
 
 ''' Preprocess input reference image '''
-img = cv2.imread(config.jpg)
+img = cv2.imread(config.img_ref_file)
 
 predictor = face_alignment.FaceAlignment(face_alignment.LandmarksType._3D, device='cuda', flip_input=True)
 shapes = predictor.get_landmarks(img)
@@ -91,12 +90,6 @@ if (not shapes or len(shapes) != 1):
 shape_3d = shapes[0]
 shape_3d = utils.close_input_face_mouth(shape_3d)
 
-''' Additional manual adjustment to input face landmarks (slimmer lips and wider eyes) '''
-#shape_3d[48:, 0] = (shape_3d[48:, 0] - np.mean(shape_3d[48:, 0])) * 0.95 + np.mean(shape_3d[48:, 0])
-#shape_3d[49:54, 1] += 1.
-#shape_3d[55:60, 1] -= 1.
-#shape_3d[[37, 38, 43, 44], 1] -= 2
-#shape_3d[[40, 41, 46, 47], 1] += 2
 
 ''' Normalize face '''
 #shape_3d, scale, shift = utils.norm_input_face(shape_3d)
