@@ -2,11 +2,8 @@ import torch
 from torch.utils.data import Dataset
 import os
 from skimage import io, img_as_float32, transform
-#from utils import get_spk_emb
 import random
 import numpy as np
-#import face_alignment
-#from resemblyzer import preprocess_wav, VoiceEncoder
 from torchvision import transforms
 import cv2
 
