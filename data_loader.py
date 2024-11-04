@@ -60,15 +60,12 @@ class MEAD_dataset(Dataset):
         self.path_ref_img = path_ref_img
         self.path_ref_lmrk = path_ref_lmrk
         self.utter_num = 128
-        #self.utter_start = utter_start
 
     def __len__(self):
         return len(self.all_data)
 
     def __getitem__(self, idx):
         emotion = self.all_data[idx].split('/')[-1].split('_')[1]
-        #label_emo = torch.Tensor([emo_label[emotion]])
-
         c = self.all_data[idx].split('/')[-1].split('_')
 
         audio_file = c[0]+ '_' + c[1] + '_' + c[2] + '_' + c[3] + '_' + c[4] + '.npy'
