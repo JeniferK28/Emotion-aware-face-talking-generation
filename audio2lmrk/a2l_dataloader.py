@@ -9,10 +9,8 @@ from torch_geometric.data import Dataset
 from torch_geometric.data import Data
 import clip
 from utils import close_input_face_mouth
-
-
 from torch_geometric.utils.convert import from_scipy_sparse_matrix
-#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 
 emo_vec= {'angry': [1,0,0,0,0,0,0,0], 'contempt':[0,1,0,0,0,0,0,0], 'disgusted':[0,0,1,0,0,0,0,0], 'fear':[0,0,0,1,0,0,0,0], 'happy':[0,0,0,0,1,0,0,0],
              'neutral':[0,0,0,0,0,1,0,0],'sad':[0,0,0,0,0,0,1,0], 'surprised':[0,0,0,0,0,0,0,1]}
@@ -49,32 +47,10 @@ class audio_lmrk_graph(Dataset):
         index = c[5].split('.')[0]
         file_name = self.all_data[idx].split('/')[-1].split(index)[0]
         all_lmrks = []
-        # for i in range(1,4):
-        #     if int(index)-i > 0:
-        #         lmrk_file = file_name + str(int(index)-i)+ '.npy'
-        #     else:
-        #         lmrk_file = file_name + str(1) + '.npy'
-        #
-        #     lmrk = np.load(os.path.join(self.path_lmrk, lmrk_file))
-        #     lmrk[48:, 0] = (lmrk[48:, 0] - np.mean(lmrk[48:, 0])) * 0.95 + np.mean(lmrk[48:, 0])
-        #     lmrk[49:54, 1] += 1.
-        #
-        #     lmrk[55:60, 1] -= 1.
-        #     lmrk[[37, 38, 43, 44], 1] -= 2
-        #     lmrk[[40, 41, 46, 47], 1] += 2
-        #     all_lmrks.append(lmrk[:, 0:2])
-
 
         out_lmrks = np.load(os.path.join(self.path_lmrk, self.all_data[idx].split('/')[-1]))
 
         edge_index, edge_attr = from_scipy_sparse_matrix(self.vertices)
-        ''' Additional manual adjustment to input face landmarks (slimmer lips and wider eyes) '''
-        #out_lmrks[48:, 0] = (out_lmrks[48:, 0] - np.mean(out_lmrks[48:, 0])) * 0.95 + np.mean(out_lmrks[48:, 0])
-        #out_lmrks[49:54, 1] += 1.
-        #out_lmrks[55:60, 1] -= 1.
-        #out_lmrks[[37, 38, 43, 44], 1] -= 2
-        #out_lmrks[[40, 41, 46, 47], 1] += 2
-
 
         out_lmrks = torch.tensor(out_lmrks).to(torch.float64)
         out = out_lmrks[:, 0:2]
@@ -82,30 +58,13 @@ class audio_lmrk_graph(Dataset):
         data_out = Data(x=out, edge_index=edge_index.contiguous(), edge_attr=edge_attr)
         out = torch.unsqueeze(out, 0).to(self.device)
 
-        #lmrk_file = c[0] + '_' + c[1] + '_' + c[2] + '_' + c[3] + '_' + c[4] + '_' + str(1) + '.npy'
-        #ref_lmrk = np.load(os.path.join(self.path_lmrk, lmrk_file))
-        #ref_lmrk = close_input_face_mouth(ref_lmrk)
-
-        ## SAME FACE FOR EVERYONE
         ref_lmrk = np.load(os.path.join(self.path_ref_lmrk, c[0] + '.npy'))
-        ''' Additional manual adjustment to input face landmarks (slimmer lips and wider eyes) '''
-        #ref_lmrk[48:, 0] = (ref_lmrk[48:, 0] - np.mean(ref_lmrk[48:, 0])) * 0.95 + np.mean(ref_lmrk[48:, 0])
-        #ref_lmrk[49:54, 1] += 1.
-        #ref_lmrk[55:60, 1] -= 1.
-        #ref_lmrk[[37, 38, 43, 44], 1] -= 2
-        #ref_lmrk[[40, 41, 46, 47], 1] += 2
 
         ref_lmrk = torch.tensor(ref_lmrk).to(torch.float64)
         ref_lmrk = ref_lmrk[:,0:2]
         data_in = Data(x=ref_lmrk, edge_index=edge_index.contiguous(), edge_attr=edge_attr, pos=self.pos)
         input = torch.unsqueeze(ref_lmrk, 0).to(self.device)
 
-        # if int(c[4]) < 10:
-        #     n = '00' + c[4]
-        # else:
-        #     n = '0' + c[4]
-
-        # lmrk_file = c[0] + '_' + c[1] + '_' + c[2] + '_' + c[3] + '_' + n + '_' + c[5]
         #neutral or emo
         #file = c[0] + '_' + c[1] + '_' + c[2] + '_' + c[3] + '_' + c[4] + '.npy'
         file = c[0] + '_' + c[1] + '_' + c[2] + '_' + c[3] + '_' + str(int(c[4])) + '.npy'
@@ -113,11 +72,8 @@ class audio_lmrk_graph(Dataset):
         spk_emb = torch.FloatTensor(spk_emb).to(self.device)
 
         audio_emb = np.load(os.path.join(self.path_audio, self.all_data[idx]))
-        #mfcc = np.load(os.path.join(self.path_audio, self.all_data[idx]))
-        # spk_emb, mean  = get_spk_emb(audio_file)
 
         audio_emb = torch.FloatTensor(audio_emb)
-        #mfcc = torch.unsqueeze(mfcc, 0).cuda()
         audio = {}
         lmrks = {}
         # conv torch.unsqueze
@@ -173,7 +129,6 @@ class audio_lmrk_vertice(Dataset):
         spk_emb = torch.FloatTensor(spk_emb).to(self.device)
 
         mfcc = np.load(os.path.join(self.path_audio, self.all_data[idx]))
-        #spk_emb, mean  = get_spk_emb(audio_file)
 
         mfcc = mfcc[:, 1:]
         mfcc = torch.FloatTensor(mfcc)
@@ -226,7 +181,6 @@ class audio_lmrk_graph_series(Dataset):
         data_out = Data(x=out, edge_index=edge_index.contiguous(), edge_attr=edge_attr)
         out = torch.unsqueeze(out, 0).to(self.device)
 
-        ## SAME FACE FOR EVERYONE
         ref_lmrk = np.load(os.path.join(self.path_ref_lmrk, c[0] + '.npy'))
 
         ref_lmrk = torch.tensor(ref_lmrk).to(torch.float64)
@@ -241,7 +195,6 @@ class audio_lmrk_graph_series(Dataset):
 
         audio_emb = np.load(os.path.join(self.path_audio, self.all_data[idx]))
         audio_emb = torch.FloatTensor(audio_emb)
-        #mfcc = torch.unsqueeze(mfcc, 0).cuda()
         audio = {}
         lmrks = {}
         # conv torch.unsqueze
