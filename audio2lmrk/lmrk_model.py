@@ -14,58 +14,21 @@ class lmrk_encoder_h(nn.Module):
         self.conv1 = GraphConv(self.feature_size, self.encoder_embedding_size).double()
         self.conv2 = GraphConv(self.encoder_embedding_size, self.encoder_embedding_size).double()
         self.conv3 = GraphConv(self.encoder_embedding_size, self.encoder_embedding_size).double()
-        # self.conv1 = TransformerConv(self.feature_size,
-        #                              self.encoder_embedding_size,
-        #                              heads=4,
-        #                              concat=False,
-        #                              beta=True)
         self.bn1 = BatchNorm(self.encoder_embedding_size)
-        # self.conv2 = TransformerConv(self.encoder_embedding_size,
-        #                              self.encoder_embedding_size,
-        #                              heads=4,
-        #                              concat=False,
-        #                              beta=True)
         self.bn2 = BatchNorm(self.encoder_embedding_size)
-        # self.conv3 = TransformerConv(self.encoder_embedding_size,
-        #                              self.encoder_embedding_size,
-        #                              heads=4,
-        #                              concat=False,
-        #                              beta=True)
         self.bn3 = BatchNorm(self.encoder_embedding_size)
-        # self.conv4 = TransformerConv(self.encoder_embedding_size,
-        #                              self.encoder_embedding_size,
-        #                              heads=4,
-        #                              concat=False,
-        #                              beta=True)
-
         # Pooling layers
         self.pooling = Set2Set(self.encoder_embedding_size, processing_steps=2)
 
     def forward(self, input, adj, s, device, train):
         x = self.conv1(input.x, input.edge_index).relu()
-        # x = self.bn1(x)
         x = self.conv2(x, input.edge_index).relu()
-        # x = self.bn2(x)
         x = self.conv3(x, input.edge_index).relu()
-        # x_resize = torch.zeros((1, 68, 128))
-        # c = 0
-        # for i in range(1):
-        #     x_resize[i, :, :] = x[68 * c:68 * (c + 1), :]
-        #     c += 1
-        # if train == True :
 
-        #x_resize = torch.reshape(x, (input.num_graphs, 68, 128)).to(torch.float32)
-        # else:
         x_resize = torch.reshape(x, (1, 68, 128)).to(torch.float32)
-        # x = self.bn3(x)
-        # x = self.conv4(x, edge_index).relu()
 
         # Pool to global representation
-        # x = self.pooling(x, batch_index)
         x, adj, l1, e1 = dense_diff_pool(x_resize.to(device), adj, s)
-        # Latent transform layers
-        # mu = self.mu_transform(x)
-        # logvar = self.logvar_transform(x)
 
         return x, adj, l1, e1, input.pos
 
@@ -138,13 +101,10 @@ class lmrkNet(nn.Module):
 
     def forward(self, x,  adj, s, device, train):
         feature, adj, l1, e1, pos = self.encoder(x, adj, s, device, train)
-        #feature = self.fc(feature)
-        #out = self.decoder(feature)
         return feature
 
     def cross(self, x, adj, s, device, train):
         lmrk_emb, adj, l1, e1, pos = self.encoder(x, adj, s, device, train=train)
-        #ct_emb = self.fc(lmrk_emb)
         lmrk = self.decoder(lmrk_emb)
         return  lmrk, lmrk_emb
 
@@ -166,14 +126,10 @@ class lmrkNet(nn.Module):
 
     def update_network(self, loss_dict):
 
-        #loss = sum(loss for loss.to(torch.float) in loss_dict.values())
         loss = sum(loss_dict.values())
-        #loss = loss.to(torch.float32)
         self.optimizer.zero_grad()
-        # self.optimizerD.zero_grad()
         loss.backward()
         self.optimizer.step()
-        # self.optimizerD.step()
 
     def update_learning_rate(self):
         self.scheduler.step(self.clock.epoch)
@@ -181,9 +137,7 @@ class lmrkNet(nn.Module):
     def train_func(self, lmrk, data):
         self.encoder.train()
         self.decoder.train()
-        # self.lmrk_decoder_no_ct.train()
-        # self.lmrk_D.train()
-        # self.emo_enc.train()
+
         self.fc.train()
         outputs, losses = self.process(lmrk, data, train=True)
         self.update_network(losses)
@@ -194,9 +148,7 @@ class lmrkNet(nn.Module):
         self.encoder.eval()
         self.decoder.eval()
         self.fc.eval()
-        # self.lmrk_D.eval()
-        # self.emo_enc.eval()
-
+ 
         with torch.no_grad():
             outputs, losses = self.process(lmrk, data, train=False)
 
