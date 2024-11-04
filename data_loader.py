@@ -26,7 +26,6 @@ class Speaker_dataset(Dataset):
         self.train = train
         self.path = path
         self.utter_num = 128
-        #self.utter_start = utter_start
 
     def __len__(self):
         return len(self.all_data)
@@ -37,18 +36,13 @@ class Speaker_dataset(Dataset):
 
         c = self.all_data[idx].split('/')[-1].split('_')
         file = c[0]+ '_' + c[1] + '_' + c[2] + '_' + c[3] + '_' + c[4] + '.npy'
-        # if int(c[4])<10:
-        #     n = '00' + c[4]
-        # else : n = '0' + c[4]
         spk_emb = np.load(os.path.join(self.path,file))
         spk_emb = torch.FloatTensor(spk_emb)
-        #spk_emb, mean  = get_spk_emb(audio_file)
         mfcc_path = os.path.join(self.all_data[idx])
         mfcc = np.load(mfcc_path)
         mfcc = mfcc[:, 1:]
         mfcc = torch.FloatTensor(mfcc)
         data = torch.unsqueeze(mfcc, 0)
-        #data = torch.tensor(np.transpose(data, axes=(0, 2, 1)))  # transpose [batch, frames, n_mels]
 
         if self.train == True:
             audio_id = c[0]
@@ -79,28 +73,18 @@ class MEAD_dataset(Dataset):
         #label_emo = torch.Tensor([emo_label[emotion]])
 
         c = self.all_data[idx].split('/')[-1].split('_')
-        # if int(c[3])<10:
-        #     a = '00' + c[3]
-        # else: a = '0'+ c[3]
 
         audio_file = c[0]+ '_' + c[1] + '_' + c[2] + '_' + c[3] + '_' + c[4] + '.npy'
         if int(c[4])<10:
             n = '00' + c[4]
         else : n = '0' + c[4]
         img_file = c[0] + '_' + c[1] + '_' + c[2] + '_' + c[3] + '_' + n + '_' + c[5].split('.')[0]
-        #img = img_as_float32(io.imread(os.path.join(self.path_ref_img, c[0] + '.jpg')))
-        #img = np.array(img, dtype='float32')
-
-        #example_image = img_as_float32(io.imread(os.path.join(self.path_img, img_file + '.jpg')))
-        #example_image = np.array(example_image, dtype='float32')
 
         ref_landmarks = np.load(os.path.join(self.path_ref_lmrk, c[0] + '.npy'))
-        #print(os.path.join(self.path_lmrk, img_file + '.npy'))
         landmarks = np.load(os.path.join(self.path_lmrk, img_file + '.npy'))
 
         spk_emb = np.load(os.path.join(self.path_spk, audio_file))
         spk_emb = torch.FloatTensor(spk_emb)
-        #spk_emb, mean  = get_spk_emb(audio_file)
 
         mfcc_path = os.path.join(self.all_data[idx])
         mfcc = np.load(mfcc_path, allow_pickle=True)
@@ -109,24 +93,13 @@ class MEAD_dataset(Dataset):
         data = torch.unsqueeze(mfcc, 0)
         #data = torch.tensor(np.transpose(data, axes=(0, 2, 1)))  # transpose [batch, frames, n_mels]
 
-        # if self.train == True:
-        #     audio_id = c[0]
-        #     label_id = torch.Tensor([id_label[audio_id]])
-        #     return data, spk_emb, label_emo, label_id
-        # else:
-        #     label_id = c[0]
-        #     return data, spk_emb, label_emo, label_id
         input = {}
         out = {}
 
         input['speaker_emb'] = spk_emb
-        #out['driving'] = driving.transpose((0, 3, 1, 2))
         input['audio'] = np.array(data, dtype='float32')
         input['emotion'] = torch.Tensor([emo_label[emotion]])
-        #input['image'] = img.transpose((2, 0, 1))
         input['landmarks'] = ref_landmarks
-        #out['example_image'] = example_image.transpose((2, 0, 1))
-        #out['driving_pose'] = driving_pose
         out['landmarks'] = landmarks
         return input, out
 
@@ -143,32 +116,18 @@ class lmrk_img_dataset(Dataset):
         return len(self.all_data)
 
     def __getitem__(self, idx):
-        #emotion = self.all_data[idx].split('/')[-1].split('_')[1]
-        #label_emo = torch.Tensor([emo_label[emotion]])
 
         lmrks = np.load(self.all_data[idx])
-        #lmrks[48:, 0] = (lmrks[48:, 0] - np.mean(lmrks[48:, 0])) * 0.95 + np.mean(lmrks[48:, 0])
-        #lmrks[49:54, 1] += 1.
-        #lmrks[55:60, 1] -= 1.
-        #lmrks[[37, 38, 43, 44], 1] -= 2
-        #lmrks[[40, 41, 46, 47], 1] += 2
-
 
         c = self.all_data[idx].split('/')[-1].split('_')
         img_file = self.all_data[idx].split('/')[-1].split('.')[0]
 
         img = cv2.imread(os.path.join(self.path_ref_img, c[0] + '.jpg'))
         img= cv2.normalize(img, None, 0, 1.0, cv2.NORM_MINMAX, dtype=cv2.CV_32F)
-
-        #img = np.array(img, dtype='float32')
-        #img = self.trans(img)
         img = torch.Tensor(img).cuda()
 
         img_out = cv2.imread(os.path.join(self.path_img, img_file + '.jpg'))
         img_out = cv2.normalize(img_out, None, 0, 1.0, cv2.NORM_MINMAX, dtype=cv2.CV_32F)
-        #img_out = np.array(img_out, dtype='float32')
-        #img_out = self.trans(img_out)
-
 
         input = {}
         out = {}
