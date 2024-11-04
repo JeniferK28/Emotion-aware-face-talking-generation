@@ -100,9 +100,6 @@ print('Processing audio file', audio)
 #m = utils.audio_preprocessing(audio)
 m = utils.wav2data(audio,config.device)
 
-# if (os.path.isfile('results/tmp.wav')):
-#     os.remove('results/tmp.wav')
-
 
 df = pd.read_excel('/mnt/40E42154E4214D8A/audio_test/landmark_matrix.xlsx')
 adj = pd.DataFrame(df).to_numpy()
@@ -117,9 +114,7 @@ audio2lmrk = a2lNet(config).to(config.device)
 #audio2lmrk = a2lNet_pretrain(config).to(config.device)
 audio2lmrk.load_state_dict(torch.load(config.a2l_pretrain))
 
-#emo = audio.split('/')[6]
 emo = config.emo
-
 
 fls = torch.zeros([len(m), 68,2])
 c=0
