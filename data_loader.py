@@ -98,11 +98,9 @@ class MEAD_dataset(Dataset):
         return input, out
 
 class lmrk_img_dataset(Dataset):
-    def __init__(self, dataset_dir,   path_ref_img, path_img):
+    def __init__(self, dataset_dir):
         # data path
         self.all_data = dataset_dir
-        self.path_ref_img = path_ref_img
-        self.path_img = path_img
         self.trans = transforms.Compose([transforms.ToTensor(),
                                         transforms.Normalize((0.179, 0.1963, 0.159), (0.083, 0.066, 0.053))])
 
@@ -111,17 +109,14 @@ class lmrk_img_dataset(Dataset):
 
     def __getitem__(self, idx):
 
-        lmrks = np.load(self.all_data[idx])
-
-        c = self.all_data[idx].split('/')[-1].split('_')
-        img_file = self.all_data[idx].split('/')[-1].split('.')[0]
-
-        img = cv2.imread(os.path.join(self.path_ref_img, c[0] + '.jpg'))
-        img= cv2.normalize(img, None, 0, 1.0, cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+        data = np.load(self.all_data[idx])
+        
+        lmrks = data['lmrks']
+        img = data['img']
         img = torch.Tensor(img).cuda()
 
-        img_out = cv2.imread(os.path.join(self.path_img, img_file + '.jpg'))
-        img_out = cv2.normalize(img_out, None, 0, 1.0, cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+        img_out = data['img_out']
+        #img_out = cv2.normalize(img_out, None, 0, 1.0, cv2.NORM_MINMAX, dtype=cv2.CV_32F)
 
         input = {}
         out = {}
