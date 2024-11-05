@@ -57,7 +57,8 @@ def parse_args():
     parser.add_argument("--emo", type=str, default="angry")
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--audio_file", type=str, default="/media/jen/T7 Touch/Audio/test/M003/neutral/level_1/005.m4a")
-    parser.add_argument("--img_ref_path", type=str, default="/mnt/40E42154E4214D8A/img_ref/MEAD_test/img")
+    parser.add_argument("--img_ref_file", type=str, default="/mnt/40E42154E4214D8A/img_ref/MEAD_test/img/M003.jpg")
+    parser.add_argument("--output_file", type=str, default="M003_angry_005")
     return parser.parse_args()
 
 
@@ -65,10 +66,10 @@ def parse_args():
 
 config = parse_args()
 audio_id = config.audio_file.split('/')[-1].split('.')[0]
-sub_id = config.audio_file.split('/')[6] + '_' + config.audio_file.split('/')[7] + '_' + config.audio_file.split('/')[8] + '_'+ config.audio_file.split('/')[9].split('.')[0]
+#config.output_file = config.audio_file.split('/')[6] + '_' + config.audio_file.split('/')[7] + '_' + config.audio_file.split('/')[8] + '_'+ config.audio_file.split('/')[9].split('.')[0]
 shutil.copy(config.audio_file, '/results/{}.wav'.format(audio_id))
 
-config.img_ref_file =  os.path.join(config.img_ref_path, sub_id.split('_')[0] + '.jpg')
+#config.img_ref_file =  os.path.join(config.img_ref_path, sub_id.split('_')[0] + '.jpg')
 
 config.audio = audio_id + '.wav'
 config.device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
@@ -78,12 +79,14 @@ from skimage import io, img_as_float32
 ''' Preprocess input reference image '''
 img = cv2.imread(config.img_ref_file)
 
+# Extract face features
 predictor = face_alignment.FaceAlignment(face_alignment.LandmarksType._3D, device='cuda', flip_input=True)
 shapes = predictor.get_landmarks(img)
 if (not shapes or len(shapes) != 1):
     print('Cannot detect face landmarks. Exit.')
     exit(-1)
 
+# Make sure input image has cloase lips
 shape_3d = shapes[0]
 shape_3d = utils.close_input_face_mouth(shape_3d)
 
@@ -93,8 +96,9 @@ shutil.copyfile('results/{}'.format(config.audio), 'results/tmp.wav')
 spk_emb, a = utils.get_spk_emb('results/{}'.format(config.audio))
 
 print('Processing audio file', audio)
-m = utils.wav2data(audio,config.device)
 
+# Load graph network vertices matrix
+m = utils.wav2data(audio,config.device)
 df = pd.read_excel('/mnt/40E42154E4214D8A/audio_test/landmark_matrix.xlsx')
 adj = pd.DataFrame(df).to_numpy()
 vertices = sparse.csc_matrix(adj)
@@ -103,15 +107,15 @@ s = torch.zeros([68, 8])
 s[0:17, 0] = 1;s[17:22, 1] = 1;s[22:27, 2] = 1;s[27:36, 3] = 1;s[36:42, 4] = 1;s[42:48, 5] = 1
 s[48:60, 6] = 1;s[60:68, 7] = 1
 
-
+# Load pre-trained network
 audio2lmrk = a2lNet(config).to(config.device)
 #audio2lmrk = a2lNet_pretrain(config).to(config.device)
 audio2lmrk.load_state_dict(torch.load(config.a2l_pretrain))
 
 emo = config.emo
-
 fls = torch.zeros([len(m), 68,2])
 c=0
+
 for mfcc in m:
     #elements to device
     data, audio, ref_lmrks = utils.a2l_data(shape_3d, mfcc, emo, spk_emb, adj, vertices, s, pos,  config.device)
@@ -129,10 +133,10 @@ fls[:, :48 * 2] = savgol_filter(fls[:, :48 * 2], 15, 3, axis=0)
 fls[:, 48 * 2:] = savgol_filter(fls[:, 48 * 2:], 5, 3, axis=0)
 fls = fls.reshape((-1, 68, 2))
 
-''' lmrk2Img '''
+# Generate images and construct videos
 model = Image_translation_block(img_config(), single_test=True)
 with torch.no_grad():
-    model.single_test(jpg=img, fls=fls, prefix=sub_id)
+    model.single_test(jpg=img, fls=fls, prefix=config.output_file)
     print('Gen')
 
 
