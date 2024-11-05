@@ -47,14 +47,14 @@ parser.add_argument('--fan_2or3D', type=str, default='3D')
 
 parser.add_argument('--single_test', type=str, default='')
 
-parser.add_argument("--lmrks_train", type=str, default="/mnt/40E42154E4214D8A/pross_data/lmrks")
-parser.add_argument("--lmarks_val", type=str, default="/mnt/40E42154E4214D8A/pross_data/Test/lmrks")
+parser.add_argument("--lmrks_train", type=str, default="/mnt/40E42154E4214D8A/pross_data/lmrks", help = 'Path for landmarks file on the training set')
+parser.add_argument("--lmrks_val", type=str, default="/mnt/40E42154E4214D8A/pross_data/Test/lmrks", help = 'Path for landmarks file on the val set')
 
-parser.add_argument("--train_ref_img", type=str, default="/mnt/40E42154E4214D8A/img_ref/MEAD_train")
-parser.add_argument("--train_img_path", type=str, default="/mnt/40E42154E4214D8A/pross_data/Images")
+#parser.add_argument("--train_ref_img", type=str, default="/mnt/40E42154E4214D8A/img_ref/MEAD_train", help = 'Path for reference image file on the training set')
+#parser.add_argument("--train_img_path", type=str, default="/mnt/40E42154E4214D8A/pross_data/Images", help = 'Path for output image file on the training set')
 
-parser.add_argument("--val_ref_img", type=str, default="/mnt/40E42154E4214D8A/img_ref/MEAD_test")
-parser.add_argument("--val_img_path", type=str, default="/mnt/40E42154E4214D8A/pross_data/Test/Images")
+#parser.add_argument("--val_ref_img", type=str, default="/mnt/40E42154E4214D8A/img_ref/MEAD_test", help =  'Path for reference image file on the val set')
+#parser.add_argument("--val_img_path", type=str, default="/mnt/40E42154E4214D8A/pross_data/Test/Images", help = 'Path for output image file on the training set')
 
 config = parser.parse_args()
 
@@ -76,8 +76,8 @@ for lmrk in os.listdir(config.lmrk_val):
     lmrk_val.append(os.path.join(config.lmrk_val, lmrk))
 
 
-train_set = lmrk_img_dataset(lmrk_train, config.train_ref_img, config.train_img_path)
-val_set = lmrk_img_dataset(lmrk_val, config.val_ref_img, config.val_img_path)
+train_set = lmrk_img_dataset(lmrk_train)
+val_set = lmrk_img_dataset(lmrk_val)
 
 # train_set,test_set = train_test_split(dataset,test_size=0.2,random_state=1)
 train_loader = DataLoader(train_set, batch_size=config.batch_size,
