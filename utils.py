@@ -44,20 +44,11 @@ def get_centroid(embeddings, speaker_num, utterance_num):
 
 
 def get_utterance_centroids(embeddings):
-    """
-    Returns the centroids for each utterance of a speaker, where
-    the utterance centroid is the speaker centroid without considering
-    this utterance
-    Shape of embeddings should be:
-        (speaker_ct, utterance_per_speaker_ct, embedding_size)
-    """
+
     sum_centroids = embeddings.sum(dim=1)
-    # we want to subtract out each utterance, prior to calculating the
-    # the utterance centroid
     sum_centroids = sum_centroids.reshape(
         sum_centroids.shape[0], 1, sum_centroids.shape[-1]
     )
-    # we want the mean but not including the utterance itself, so -1
     num_utterances = embeddings.shape[1] - 1
     centroids = (sum_centroids - embeddings) / num_utterances
     return centroids
@@ -77,12 +68,8 @@ def get_cossim_prior(embeddings, centroids):
 
 
 def get_cossim(embeddings, centroids):
-    # number of utterances per speaker
     num_utterances = embeddings.shape[1]
     utterance_centroids = get_utterance_centroids(embeddings)
-
-    # flatten the embeddings and utterance centroids to just utterance,
-    # so we can do cosine similarity
     utterance_centroids_flat = utterance_centroids.view(
         utterance_centroids.shape[0] * utterance_centroids.shape[1],
         -1
@@ -91,18 +78,9 @@ def get_cossim(embeddings, centroids):
         embeddings.shape[0] * num_utterances,
         -1
     )
-    # the cosine distance between utterance and the associated centroids
-    # for that utterance
-    # this is each speaker's utterances against his own centroid, but each
-    # comparison centroid has the current utterance removed
+ 
     cos_same = F.cosine_similarity(embeddings_flat, utterance_centroids_flat)
 
-    # now we get the cosine distance between each utterance and the other speakers'
-    # centroids
-    # to do so requires comparing each utterance to each centroid. To keep the
-    # operation fast, we vectorize by using matrices L (embeddings) and
-    # R (centroids) where L has each utterance repeated sequentially for all
-    # comparisons and R has the entire centroids frame repeated for each utterance
     centroids_expand = centroids.repeat((num_utterances * embeddings.shape[0], 1))
     embeddings_expand = embeddings_flat.unsqueeze(1).repeat(1, embeddings.shape[0], 1)
     embeddings_expand = embeddings_expand.view(
@@ -144,8 +122,6 @@ def calc_loss(sim_matrix):
 def normalize_0_1(values, max_value, min_value):
     normalized = np.clip((values - min_value) / (max_value - min_value), 0, 1)
     return normalized
-
-#data_sr = 16000, data_window=0.025, data_hop = 0.01, nmels = 40, data.tisv_frame = 180 (Max number of time steps in input after preproces)
 
 
 def mfccs_and_spec(wav_file, wav_process=False, calc_mfccs=False, calc_mag_db=False):
@@ -199,9 +175,8 @@ def copy_state_dict(state_dict, model, strip=None, replace=None):
     if len(missing) > 0:
         print("missing keys in state_dict:", missing)
 
-# #############
+
 # Get_spk_emb
-# #############
 
 def get_spk_emb(audio_file_dir, segment_len=960000):
     #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -385,7 +360,6 @@ def close_input_face_mouth(shape_3d, p1=0.7, p2=0.5):
 
     return shape_3d
 
-#class audio_processing():
 
 def audio_preprocessing(audio_file):
     mel = []
@@ -474,7 +448,6 @@ def wav2data(audio_file, device):
         input_mfcc = cnt_ft[0,2 * idx: 2 * idx + 10, :]
         mel.append(input_mfcc)
     return mel
-
 
 
 
