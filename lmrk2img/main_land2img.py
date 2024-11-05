@@ -10,18 +10,12 @@ import torch
 from torch.utils.data import DataLoader
 from data_loader import lmrk_img_dataset
 
-seed1 = 5930
-np.random.seed(seed1)
-os.environ["PYTHONHASHSEED"] = str(seed1)
-torch.cuda.manual_seed(seed1)
-torch.cuda.manual_seed_all(seed1) # if you are using multi-GPU
-torch.manual_seed(seed1)
-
-root = r'//mnt/40E42154E4214D8A/audio_test/lmrk2img'
-
-jpg_dir = os.path.join(root, 'tmp_v')
-ckpt_dir = os.path.join(root, 'ckpt')
-log_dir = os.path.join(root, 'log')
+seed = 5930
+np.random.seed(seed)
+os.environ["PYTHONHASHSEED"] = str(seed)
+torch.cuda.manual_seed(seed)
+torch.cuda.manual_seed_all(seed) # if you are using multi-GPU
+torch.manual_seed(seed)
 
 
 parser = argparse.ArgumentParser()
@@ -53,31 +47,37 @@ parser.add_argument('--fan_2or3D', type=str, default='3D')
 
 parser.add_argument('--single_test', type=str, default='')
 
-parser.add_argument("--train_dir", type=str, default="/mnt/40E42154E4214D8A/pross_data/lmrks")
-parser.add_argument("--val_dir", type=str, default="/mnt/40E42154E4214D8A/pross_data/Test/lmrks")
+parser.add_argument("--lmrks_train", type=str, default="/mnt/40E42154E4214D8A/pross_data/lmrks")
+parser.add_argument("--lmarks_val", type=str, default="/mnt/40E42154E4214D8A/pross_data/Test/lmrks")
 
+parser.add_argument("--train_ref_img", type=str, default="/mnt/40E42154E4214D8A/img_ref/MEAD_train")
+parser.add_argument("--train_img_path", type=str, default="/mnt/40E42154E4214D8A/pross_data/Images")
 
+parser.add_argument("--val_ref_img", type=str, default="/mnt/40E42154E4214D8A/img_ref/MEAD_test")
+parser.add_argument("--val_img_path", type=str, default="/mnt/40E42154E4214D8A/pross_data/Test/Images")
 
 config = parser.parse_args()
 
-''' Step 1. Data preparation '''
+jpg_dir =  'tmp_v'
+ckpt_dir = 'ckpt'
+log_dir = 'log'
+
+#### Data preparation 
 
 from files_random import select_files
-lmrk_train = select_files('train')
-lmrk_val = select_files('val')
-# for lmrk in os.listdir(config.train_dir):
-#     lmrk_train.append(os.path.join(config.train_dir, lmrk))
 
-# for lmrk in os.listdir(config.val_dir):
-#     lmrk_val.append(os.path.join(config.val_dir, lmrk))
+#lmrk_train = select_files('train')
+#lmrk_val = select_files('val')
 
-train_ref_img = '/mnt/40E42154E4214D8A/img_ref/MEAD_train'
-img_path = '/mnt/40E42154E4214D8A/pross_data/Images'
-train_set = lmrk_img_dataset(lmrk_train, train_ref_img, img_path)
+for lmrk in os.listdir(config.lmrk_train):
+    lmrk_train.append(os.path.join(config.lmrk_train, lmrk))
 
-val_ref_img = '/mnt/40E42154E4214D8A/img_ref/MEAD_test'
-img_path = '/mnt/40E42154E4214D8A/pross_data/Test/Images'
-val_set = lmrk_img_dataset(lmrk_val, val_ref_img, img_path)
+for lmrk in os.listdir(config.lmrk_val):
+    lmrk_val.append(os.path.join(config.lmrk_val, lmrk))
+
+
+train_set = lmrk_img_dataset(lmrk_train, config.train_ref_img, config.train_img_path)
+val_set = lmrk_img_dataset(lmrk_val, config.val_ref_img, config.val_img_path)
 
 # train_set,test_set = train_test_split(dataset,test_size=0.2,random_state=1)
 train_loader = DataLoader(train_set, batch_size=config.batch_size,
@@ -86,7 +86,7 @@ val_loader = DataLoader(val_set, batch_size=config.batch_size,
                         shuffle=True, drop_last=True)
 
 
-''' Step 2. Train the network '''
+### Train the network 
 model = Image_translation_block(config)
 
 for epoch in range(config.nepoch):
