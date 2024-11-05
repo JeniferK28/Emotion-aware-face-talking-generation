@@ -10,7 +10,7 @@ python main_land2img.py --lmrks_train <path>  --lmrks_val <path>
 * Inference
   Generate emotion aware videos from audio
 ```bash
-python main_land2img.py --audio_file <path>  --img_ref_file <path> --output_file <path> 
+python main_land2img.py --audio_file <path>  --img_ref_file <path> --output_file <path> --emo 'angry'
 ```
 ## Results
 <img src="ref.jpg" width=50% height=50%>
